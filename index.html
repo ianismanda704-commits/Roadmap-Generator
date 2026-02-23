@@ -1,0 +1,1025 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Roadmap AI — Personalized Mastery Engine</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:ital,wght@0,300;0,400;1,300&family=Playfair+Display:ital,wght@0,400;1,600&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:       #0a0a0f;
+      --surface:  #111118;
+      --surface2: #18181f;
+      --border:   rgba(255,255,255,0.08);
+      --accent:   #e8ff47;
+      --accent2:  #ff6b47;
+      --text:     #f0f0f5;
+      --muted:    #6b6b7a;
+      --success:  #47ffb2;
+      --grok:     #8b5cf6;
+      --chat-w:   380px;
+    }
+
+    body {
+      background: var(--bg); color: var(--text);
+      font-family: 'DM Mono', monospace;
+      min-height: 100vh; overflow-x: hidden;
+      transition: padding-right 0.35s ease;
+    }
+    body.chat-open { padding-right: var(--chat-w); }
+
+    /* ── noise overlay ── */
+    .noise {
+      position: fixed; inset: 0; pointer-events: none; z-index: 0; opacity: 0.35;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.05'/%3E%3C/svg%3E");
+    }
+
+    .page { position: relative; z-index: 1; max-width: 900px; margin: 0 auto; padding: 0 24px; }
+
+    /* ══════════════════════════════════════════════
+       API KEY GATE
+    ══════════════════════════════════════════════ */
+    .gate {
+      min-height: 100vh; display: flex; align-items: center; justify-content: center;
+      padding: 40px 24px;
+    }
+    .gate-card {
+      width: 100%; max-width: 460px; background: var(--surface);
+      border: 1px solid var(--border); border-radius: 12px; padding: 40px;
+      position: relative; overflow: hidden;
+    }
+    .gate-card::before {
+      content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+      background: linear-gradient(90deg, var(--grok), var(--accent));
+    }
+    .gate-logo { display: flex; align-items: center; gap: 12px; margin-bottom: 28px; }
+    .gate-hex {
+      width: 40px; height: 40px; background: var(--accent); flex-shrink: 0;
+      clip-path: polygon(50% 0%,100% 25%,100% 75%,50% 100%,0% 75%,0% 25%);
+      display: flex; align-items: center; justify-content: center;
+      font-family: 'Syne', sans-serif; font-weight: 800; font-size: 16px; color: #000;
+    }
+    .gate-brand { font-family: 'Syne', sans-serif; font-size: 20px; font-weight: 800; }
+    .gate-sub { font-size: 10px; color: var(--muted); letter-spacing: 2px; text-transform: uppercase; margin-top: 2px; }
+
+    .gate-title { font-family: 'Syne', sans-serif; font-size: 22px; font-weight: 800; margin-bottom: 8px; }
+    .gate-desc { color: var(--muted); font-size: 12px; line-height: 1.7; margin-bottom: 28px; }
+    .gate-desc a { color: var(--grok); text-decoration: none; }
+    .gate-desc a:hover { text-decoration: underline; }
+
+    .gate-label { font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); margin-bottom: 8px; display: block; }
+    .gate-input-row { display: flex; gap: 8px; }
+    .gate-input-row input {
+      flex: 1; background: var(--surface2); border: 1px solid var(--border);
+      color: var(--text); font-family: 'DM Mono', monospace; font-size: 13px;
+      padding: 12px 14px; border-radius: 4px; outline: none; transition: border-color 0.2s;
+    }
+    .gate-input-row input:focus { border-color: var(--grok); box-shadow: 0 0 0 2px rgba(139,92,246,0.15); }
+    .gate-input-row input::placeholder { color: var(--muted); }
+    .gate-btn {
+      padding: 12px 20px; background: var(--grok); border: none; color: #fff;
+      font-family: 'Syne', sans-serif; font-size: 12px; font-weight: 700; letter-spacing: 1px;
+      text-transform: uppercase; cursor: pointer; border-radius: 4px; transition: background 0.2s; white-space: nowrap;
+    }
+    .gate-btn:hover { background: #7c3aed; }
+    .gate-err { color: var(--accent2); font-size: 11px; margin-top: 8px; display: none; }
+    .gate-note { font-size: 10px; color: var(--muted); margin-top: 16px; line-height: 1.6; }
+    .key-chip {
+      display: inline-flex; align-items: center; gap: 6px; margin-top: 12px;
+      background: rgba(139,92,246,0.1); border: 1px solid rgba(139,92,246,0.25);
+      padding: 6px 12px; border-radius: 4px; font-size: 11px; color: var(--grok);
+    }
+    .key-chip-dot { width: 6px; height: 6px; background: var(--success); border-radius: 50%; }
+    .key-change { font-size: 10px; color: var(--muted); text-decoration: underline; cursor: pointer; margin-left: 8px; }
+    .key-change:hover { color: var(--accent2); }
+
+    /* ══════════════════════════════════════════════
+       MAIN APP (hidden until key set)
+    ══════════════════════════════════════════════ */
+    .app { display: none; }
+
+    /* ── header ── */
+    .header {
+      padding: 40px 0 36px; border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: space-between; gap: 20px; flex-wrap: wrap;
+    }
+    .hdr-left { display: flex; align-items: center; gap: 14px; }
+    .hdr-hex {
+      width: 40px; height: 40px; background: var(--accent); flex-shrink: 0;
+      clip-path: polygon(50% 0%,100% 25%,100% 75%,50% 100%,0% 75%,0% 25%);
+      display: flex; align-items: center; justify-content: center;
+      font-family: 'Syne', sans-serif; font-weight: 800; font-size: 16px; color: #000;
+    }
+    .hdr-title { font-family: 'Syne', sans-serif; font-size: 20px; font-weight: 800; letter-spacing: -0.3px; }
+    .hdr-sub { font-size: 10px; color: var(--muted); letter-spacing: 2px; text-transform: uppercase; margin-top: 2px; }
+    .hdr-right { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+    .hdr-tag {
+      padding: 5px 11px; background: rgba(232,255,71,0.07); border: 1px solid rgba(232,255,71,0.2);
+      color: var(--accent); font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; border-radius: 2px;
+    }
+    .hdr-key {
+      padding: 5px 11px; background: rgba(139,92,246,0.07); border: 1px solid rgba(139,92,246,0.2);
+      color: var(--grok); font-size: 10px; letter-spacing: 1px; border-radius: 2px;
+      cursor: pointer; transition: background 0.2s;
+    }
+    .hdr-key:hover { background: rgba(139,92,246,0.15); }
+
+    /* ── form ── */
+    .form-section { padding: 52px 0; }
+    .sec-label {
+      font-size: 10px; letter-spacing: 3px; text-transform: uppercase; color: var(--muted);
+      display: flex; align-items: center; gap: 12px; margin-bottom: 36px;
+    }
+    .sec-label::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+    .form-grid { display: grid; gap: 26px; }
+    .field { display: flex; flex-direction: column; gap: 9px; }
+    .flabel {
+      font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--muted);
+      display: flex; align-items: center; gap: 8px;
+    }
+    .flabel .req { color: var(--accent); }
+    .flabel .opt { font-size: 9px; border: 1px solid var(--border); padding: 1px 5px; border-radius: 2px; }
+
+    input[type="text"], select {
+      background: var(--surface); border: 1px solid var(--border);
+      color: var(--text); font-family: 'DM Mono', monospace; font-size: 14px;
+      padding: 13px 16px; border-radius: 4px; width: 100%; outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    input[type="text"]:focus, select:focus {
+      border-color: var(--accent); box-shadow: 0 0 0 2px rgba(232,255,71,0.1);
+    }
+    input::placeholder { color: var(--muted); }
+    select {
+      cursor: pointer; appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%236b6b7a' fill='none' stroke-width='1.5'/%3E%3C/svg%3E");
+      background-repeat: no-repeat; background-position: right 14px center; padding-right: 38px;
+    }
+    select option { background: var(--surface); }
+
+    .mode-wrap { display: flex; }
+    .mbtn {
+      flex: 1; padding: 13px; border: 1px solid var(--border); background: var(--surface);
+      color: var(--muted); font-family: 'Syne', sans-serif; font-size: 12px; font-weight: 700;
+      letter-spacing: 1px; text-transform: uppercase; cursor: pointer; transition: all 0.2s;
+    }
+    .mbtn:first-child { border-radius: 4px 0 0 4px; }
+    .mbtn:last-child { border-radius: 0 4px 4px 0; border-left: none; }
+    .mbtn.on { background: var(--accent); border-color: var(--accent); color: #000; }
+    .mbtn:not(.on):hover { border-color: rgba(255,255,255,0.2); color: var(--text); }
+
+    .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 26px; }
+    @media(max-width:560px){ .two-col { grid-template-columns: 1fr; } }
+
+    .gen-btn {
+      width: 100%; padding: 17px 32px; background: var(--accent);
+      color: #000; font-family: 'Syne', sans-serif; font-size: 14px; font-weight: 800;
+      letter-spacing: 2px; text-transform: uppercase; border: none; border-radius: 4px;
+      cursor: pointer; transition: transform 0.15s, box-shadow 0.15s;
+    }
+    .gen-btn:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 8px 28px rgba(232,255,71,0.28); }
+    .gen-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+
+    .err-box {
+      padding: 16px 20px; background: rgba(255,107,71,0.07); border: 1px solid rgba(255,107,71,0.22);
+      border-radius: 6px; color: var(--accent2); font-size: 13px; line-height: 1.6;
+    }
+
+    /* ── loading ── */
+    .loading { padding: 80px 0; text-align: center; display: none; }
+    .spin {
+      width: 44px; height: 44px; border: 2px solid var(--border); border-top-color: var(--accent);
+      border-radius: 50%; animation: spin 0.75s linear infinite; margin: 0 auto 28px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .loading-title { font-family: 'Syne', sans-serif; font-size: 17px; font-weight: 700; }
+    .loading-sub { color: var(--muted); font-size: 12px; margin-top: 7px; }
+
+    /* ── roadmap ── */
+    .roadmap { padding: 36px 0 100px; display: none; }
+
+    .rm-header {
+      background: var(--surface); border: 1px solid var(--border); border-radius: 8px;
+      padding: 28px 32px; margin-bottom: 36px; position: relative; overflow: hidden;
+    }
+    .rm-header::before {
+      content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+      background: linear-gradient(90deg, var(--accent), var(--accent2));
+    }
+    .rm-pills { display: flex; gap: 7px; flex-wrap: wrap; margin-bottom: 18px; }
+    .pill {
+      font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase;
+      padding: 3px 9px; border-radius: 2px; border: 1px solid;
+    }
+    .pill-field  { border-color: var(--border); color: var(--muted); }
+    .pill-mode   { border-color: rgba(232,255,71,0.3); color: var(--accent); background: rgba(232,255,71,0.05); }
+    .pill-level  { border-color: rgba(255,107,71,0.3); color: var(--accent2); background: rgba(255,107,71,0.05); }
+
+    .rm-title {
+      font-family: 'Playfair Display', serif; font-style: italic;
+      font-size: clamp(22px, 4vw, 34px); line-height: 1.2; margin-bottom: 10px;
+    }
+    .rm-goal { color: var(--muted); font-size: 13px; line-height: 1.6; }
+
+    .rm-actions { display: flex; gap: 9px; margin-top: 18px; flex-wrap: wrap; }
+    .act-btn {
+      padding: 9px 18px; background: transparent; border: 1px solid var(--border);
+      color: var(--muted); font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 1px;
+      text-transform: uppercase; cursor: pointer; border-radius: 4px; transition: all 0.2s;
+    }
+    .act-btn:hover { border-color: rgba(255,255,255,0.2); color: var(--text); }
+    .act-btn.regen-act { border-color: rgba(139,92,246,0.3); color: var(--grok); }
+    .act-btn.regen-act:hover { background: rgba(139,92,246,0.08); border-color: var(--grok); }
+
+    .progress-wrap {
+      background: var(--surface); border: 1px solid var(--border); border-radius: 6px;
+      padding: 18px 22px; display: flex; align-items: center; gap: 18px; margin-bottom: 22px;
+    }
+    .prog-info { flex: 1; }
+    .prog-lbl { font-size: 10px; letter-spacing: 1px; text-transform: uppercase; color: var(--muted); margin-bottom: 7px; }
+    .prog-track { height: 3px; background: var(--border); border-radius: 2px; overflow: hidden; }
+    .prog-fill { height: 100%; background: var(--accent); border-radius: 2px; transition: width 0.45s ease; width: 0%; }
+    .prog-pct { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 22px; color: var(--accent); }
+
+    .tabs {
+      display: flex; margin-bottom: 28px; border-radius: 4px; overflow: hidden; border: 1px solid var(--border);
+    }
+    .tab {
+      flex: 1; padding: 11px 8px; background: var(--surface); color: var(--muted);
+      font-family: 'Syne', sans-serif; font-size: 10px; font-weight: 700; letter-spacing: 1.5px;
+      text-transform: uppercase; border: none; border-right: 1px solid var(--border); cursor: pointer; transition: all 0.2s;
+    }
+    .tab:last-child { border-right: none; }
+    .tab.on { background: var(--surface2); color: var(--text); }
+    .tab:hover:not(.on) { color: var(--text); background: rgba(255,255,255,0.02); }
+
+    .tasks { display: flex; flex-direction: column; gap: 11px; }
+
+    .task-card {
+      background: var(--surface); border: 1px solid var(--border); border-radius: 6px;
+      padding: 16px 18px; display: flex; align-items: flex-start; gap: 14px;
+      animation: slideUp 0.28s ease forwards; opacity: 0; transition: border-color 0.2s, background 0.2s;
+    }
+    @keyframes slideUp { from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)} }
+    .task-card.done { background: rgba(71,255,178,0.04); border-color: rgba(71,255,178,0.14); }
+    .task-card.done .task-text { text-decoration: line-through; opacity: 0.45; }
+
+    .tnum { font-size: 9px; color: var(--muted); opacity: 0.45; flex-shrink: 0; margin-top: 3px; min-width: 26px; }
+    .tcheck {
+      width: 20px; height: 20px; border: 1.5px solid var(--border); border-radius: 3px;
+      flex-shrink: 0; cursor: pointer; display: flex; align-items: center; justify-content: center;
+      transition: all 0.2s; margin-top: 2px;
+    }
+    .tcheck:hover { border-color: var(--success); }
+    .task-card.done .tcheck { background: var(--success); border-color: var(--success); }
+    .chk-svg { display: none; }
+    .task-card.done .chk-svg { display: block; }
+
+    .tbody { flex: 1; min-width: 0; }
+    .task-text { font-size: 13px; line-height: 1.6; color: var(--text); }
+    .task-meta { display: flex; gap: 10px; margin-top: 8px; }
+
+    .rep-btn {
+      display: flex; align-items: center; gap: 5px; cursor: pointer;
+      font-size: 9px; letter-spacing: 1px; text-transform: uppercase; color: var(--muted);
+      border: none; background: none; font-family: 'DM Mono', monospace; padding: 0; transition: color 0.2s;
+    }
+    .rep-btn:hover { color: var(--accent); }
+    .rep-btn.on { color: var(--accent); }
+    .rep-dot { width: 7px; height: 7px; border-radius: 50%; border: 1.5px solid currentColor; flex-shrink: 0; transition: background 0.2s; }
+    .rep-btn.on .rep-dot { background: var(--accent); }
+
+    .empty { text-align: center; padding: 50px 20px; color: var(--muted); font-size: 13px; }
+
+    /* ══════════════════════════════════════════════
+       REGENERATE MODAL
+    ══════════════════════════════════════════════ */
+    .modal-bg {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.78); z-index: 300;
+      display: flex; align-items: center; justify-content: center; padding: 24px;
+      opacity: 0; pointer-events: none; transition: opacity 0.2s;
+    }
+    .modal-bg.show { opacity: 1; pointer-events: all; }
+
+    .modal {
+      background: var(--surface); border: 1px solid var(--border); border-radius: 8px;
+      padding: 30px; width: 100%; max-width: 500px; position: relative;
+      transform: translateY(16px); transition: transform 0.25s ease;
+    }
+    .modal-bg.show .modal { transform: translateY(0); }
+    .modal::before {
+      content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+      background: linear-gradient(90deg, var(--grok), var(--accent)); border-radius: 8px 8px 0 0;
+    }
+    .modal-ttl { font-family: 'Syne', sans-serif; font-size: 17px; font-weight: 800; margin-bottom: 6px; }
+    .modal-sub { color: var(--muted); font-size: 12px; line-height: 1.65; margin-bottom: 20px; }
+    .modal textarea {
+      width: 100%; background: var(--surface2); border: 1px solid var(--border);
+      color: var(--text); font-family: 'DM Mono', monospace; font-size: 13px;
+      padding: 13px 15px; border-radius: 4px; outline: none; resize: none; height: 110px;
+      transition: border-color 0.2s; margin-bottom: 14px; line-height: 1.6;
+    }
+    .modal textarea:focus { border-color: var(--grok); }
+    .modal textarea::placeholder { color: var(--muted); }
+    .modal-row { display: flex; gap: 9px; justify-content: flex-end; }
+    .modal-cancel {
+      padding: 9px 18px; background: transparent; border: 1px solid var(--border);
+      color: var(--muted); font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 1px;
+      text-transform: uppercase; cursor: pointer; border-radius: 4px; transition: all 0.2s;
+    }
+    .modal-cancel:hover { color: var(--text); border-color: rgba(255,255,255,0.2); }
+    .modal-go {
+      padding: 9px 22px; background: var(--grok); border: none; color: #fff;
+      font-family: 'Syne', sans-serif; font-size: 11px; font-weight: 700; letter-spacing: 1.5px;
+      text-transform: uppercase; cursor: pointer; border-radius: 4px; transition: background 0.2s;
+    }
+    .modal-go:hover { background: #7c3aed; }
+
+    /* ══════════════════════════════════════════════
+       CHAT PANEL
+    ══════════════════════════════════════════════ */
+    .chat {
+      position: fixed; top: 0; right: 0; bottom: 0; width: var(--chat-w);
+      background: var(--surface); border-left: 1px solid var(--border);
+      display: flex; flex-direction: column; z-index: 200;
+      transform: translateX(100%); transition: transform 0.32s cubic-bezier(0.4,0,0.2,1);
+    }
+    .chat.open { transform: translateX(0); }
+
+    .chat-top {
+      padding: 18px 18px 14px; border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: space-between; flex-shrink: 0;
+    }
+    .chat-brand { display: flex; align-items: center; gap: 10px; }
+    .gbadge {
+      width: 30px; height: 30px; background: var(--grok); border-radius: 5px;
+      display: flex; align-items: center; justify-content: center;
+      font-family: 'Syne', sans-serif; font-weight: 800; font-size: 11px; color: #fff;
+    }
+    .chat-name { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 13px; }
+    .chat-powered { font-size: 9px; color: var(--muted); letter-spacing: 1px; margin-top: 1px; }
+    .chat-x {
+      width: 30px; height: 30px; border: 1px solid var(--border); background: none;
+      color: var(--muted); border-radius: 4px; cursor: pointer; font-size: 14px;
+      display: flex; align-items: center; justify-content: center; transition: all 0.2s;
+    }
+    .chat-x:hover { color: var(--text); border-color: rgba(255,255,255,0.18); }
+
+    .chat-msgs {
+      flex: 1; overflow-y: auto; padding: 14px 16px;
+      display: flex; flex-direction: column; gap: 13px;
+    }
+    .chat-msgs::-webkit-scrollbar { width: 3px; }
+    .chat-msgs::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+    .msg { display: flex; flex-direction: column; gap: 4px; }
+    .msg.u { align-items: flex-end; }
+    .msg.a { align-items: flex-start; }
+    @keyframes msgIn { from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:translateY(0)} }
+    .msg { animation: msgIn 0.18s ease; }
+
+    .msender { font-size: 9px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--muted); }
+    .mbubble {
+      padding: 10px 13px; border-radius: 6px; font-size: 12.5px; line-height: 1.65;
+      max-width: 93%; word-break: break-word;
+    }
+    .msg.u .mbubble { background: rgba(232,255,71,0.09); border: 1px solid rgba(232,255,71,0.14); }
+    .msg.a .mbubble { background: var(--surface2); border: 1px solid var(--border); }
+
+    /* suggestion card inside chat */
+    .sug-card {
+      max-width: 93%; margin-top: 5px; padding: 13px 15px; border-radius: 6px;
+      background: rgba(139,92,246,0.07); border: 1px solid rgba(139,92,246,0.23);
+    }
+    .sug-lbl { font-size: 9px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--grok); margin-bottom: 7px; }
+    .sug-txt { font-size: 12px; line-height: 1.5; margin-bottom: 11px; }
+    .sug-row { display: flex; gap: 7px; }
+    .sug-yes {
+      padding: 6px 13px; background: var(--grok); border: none; color: #fff;
+      font-family: 'Syne', sans-serif; font-size: 10px; font-weight: 700; letter-spacing: 1px;
+      text-transform: uppercase; cursor: pointer; border-radius: 3px; transition: background 0.2s;
+    }
+    .sug-yes:hover { background: #7c3aed; }
+    .sug-no {
+      padding: 6px 13px; background: transparent; border: 1px solid var(--border); color: var(--muted);
+      font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 1px; text-transform: uppercase;
+      cursor: pointer; border-radius: 3px; transition: all 0.2s;
+    }
+    .sug-no:hover { color: var(--text); }
+    .sug-status { font-size: 11px; display: flex; align-items: center; gap: 6px; }
+
+    .chat-foot { padding: 12px 14px; border-top: 1px solid var(--border); flex-shrink: 0; }
+    .chat-row { display: flex; gap: 7px; align-items: flex-end; }
+    .chat-in {
+      flex: 1; background: var(--surface2); border: 1px solid var(--border);
+      color: var(--text); font-family: 'DM Mono', monospace; font-size: 12.5px;
+      padding: 10px 13px; border-radius: 4px; outline: none; resize: none;
+      min-height: 42px; max-height: 110px; line-height: 1.5; transition: border-color 0.2s;
+    }
+    .chat-in:focus { border-color: var(--grok); }
+    .chat-in::placeholder { color: var(--muted); }
+    .send-btn {
+      width: 42px; height: 42px; background: var(--grok); border: none; color: #fff;
+      border-radius: 4px; cursor: pointer; display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0; transition: background 0.2s;
+    }
+    .send-btn:hover:not(:disabled) { background: #7c3aed; }
+    .send-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+    .chat-hint { font-size: 9.5px; color: var(--muted); text-align: center; margin-top: 7px; line-height: 1.5; }
+
+    /* ── FAB ── */
+    .fab {
+      position: fixed; bottom: 28px; right: 28px; z-index: 190;
+      width: 52px; height: 52px; background: var(--grok); border: none; border-radius: 50%;
+      cursor: pointer; font-size: 20px;
+      display: none; align-items: center; justify-content: center;
+      box-shadow: 0 6px 28px rgba(139,92,246,0.45); transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .fab:hover { transform: scale(1.09); box-shadow: 0 10px 36px rgba(139,92,246,0.55); }
+    .fab.show { display: flex; }
+    .fab-ring {
+      position: absolute; inset: -4px; border-radius: 50%;
+      border: 2px solid rgba(139,92,246,0.35); animation: ring 2.2s ease infinite;
+    }
+    @keyframes ring { 0%{transform:scale(1);opacity:.7} 100%{transform:scale(1.45);opacity:0} }
+    @keyframes dotP { 0%,80%,100%{opacity:.2;transform:scale(.8)} 40%{opacity:1;transform:scale(1)} }
+
+    @media(max-width:640px){
+      :root{ --chat-w:100vw; }
+      body.chat-open{ padding-right:0; }
+      .fab{ bottom:18px;right:18px; }
+    }
+    @media(max-width:480px){
+      .tab{ font-size:9px;padding:10px 4px;letter-spacing:.5px; }
+    }
+  </style>
+</head>
+<body>
+<div class="noise"></div>
+
+<!-- ════════════════════════════════════════════
+     API KEY GATE
+════════════════════════════════════════════ -->
+<div class="gate" id="gate">
+  <div class="gate-card">
+    <div class="gate-logo">
+      <div class="gate-hex">R</div>
+      <div>
+        <div class="gate-brand">Roadmap AI</div>
+        <div class="gate-sub">Personalized mastery engine</div>
+      </div>
+    </div>
+    <div class="gate-title">Connect your Groq API</div>
+    <div class="gate-desc">
+      This app uses <strong style="color:var(--text)">Groq</strong> for everything — roadmap generation, the AI chat assistant, and live roadmap edits. Paste your key below to get started.<br><br>
+      Get your key at <a href="https://console.groq.com" target="_blank">console.groq.com</a> → API Keys.
+    </div>
+    <label class="gate-label">Your Groq API Key</label>
+    <div class="gate-input-row">
+      <input type="password" id="gateKey" placeholder="gsk_..." autocomplete="off" />
+      <button class="gate-btn" onclick="connectKey()">Connect →</button>
+    </div>
+    <div class="gate-err" id="gateErr">Please enter a valid key starting with <code>gsk_</code></div>
+    <div class="gate-note">Your key is stored in memory only — never sent anywhere except directly to api.groq.com.</div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════
+     MAIN APP
+════════════════════════════════════════════ -->
+<div class="app" id="app">
+  <div class="page">
+
+    <!-- header -->
+    <header class="header">
+      <div class="hdr-left">
+        <div class="hdr-hex">R</div>
+        <div>
+          <div class="hdr-title">Roadmap AI</div>
+          <div class="hdr-sub">Personalized mastery engine</div>
+        </div>
+      </div>
+      <div class="hdr-right">
+        <span class="hdr-tag">Groq Powered</span>
+        <span class="hdr-key" onclick="changeKey()" title="Change API key">🔑 Change Key</span>
+      </div>
+    </header>
+
+    <!-- form -->
+    <div class="form-section" id="formSection">
+      <div class="sec-label">Configure your path</div>
+      <div class="form-grid">
+
+        <div class="field">
+          <label class="flabel">Field / Topic <span class="req">*</span></label>
+          <input type="text" id="fieldInput" placeholder="e.g. Data Science, Chess, Video Games, Fitness..." />
+        </div>
+
+        <div class="field">
+          <label class="flabel">Mode</label>
+          <div class="mode-wrap">
+            <button class="mbtn on" id="mMastery" onclick="setMode('Mastery')">⬡ Mastery</button>
+            <button class="mbtn" id="mSuccess" onclick="setMode('Success')">◆ Success</button>
+          </div>
+        </div>
+
+        <div class="two-col">
+          <div class="field">
+            <label class="flabel">Expertise Level</label>
+            <select id="levelSel">
+              <option>Beginner</option>
+              <option>Intermediate</option>
+              <option>Expert</option>
+            </select>
+          </div>
+          <div class="field">
+            <label class="flabel">Specific Goals <span class="opt">Optional</span></label>
+            <input type="text" id="goalsInput" placeholder="e.g. Reach Grandmaster rank..." />
+          </div>
+        </div>
+
+        <div id="errBox" class="err-box" style="display:none"></div>
+
+        <button class="gen-btn" onclick="generateRoadmap()">Generate My Roadmap →</button>
+      </div>
+    </div>
+
+    <!-- loading -->
+    <div class="loading" id="loadingSection">
+      <div class="spin"></div>
+      <div class="loading-title" id="loadTxt">Crafting your roadmap with Groq...</div>
+      <div class="loading-sub">Generating personalized daily, weekly &amp; monthly tasks</div>
+    </div>
+
+    <!-- roadmap -->
+    <div class="roadmap" id="roadmapSection">
+      <div class="rm-header">
+        <div class="rm-pills" id="rmPills"></div>
+        <div class="rm-title">Your Personalized Roadmap</div>
+        <div class="rm-goal" id="rmGoal" style="display:none"></div>
+        <div class="rm-actions">
+          <button class="act-btn" onclick="resetAll()">← New Roadmap</button>
+          <button class="act-btn regen-act" onclick="openRegen()">⟳ Regenerate</button>
+        </div>
+      </div>
+
+      <div class="progress-wrap">
+        <div class="prog-info">
+          <div class="prog-lbl">Overall Progress</div>
+          <div class="prog-track"><div class="prog-fill" id="progFill"></div></div>
+        </div>
+        <div class="prog-pct" id="progPct">0%</div>
+      </div>
+
+      <div class="tabs">
+        <button class="tab on" onclick="switchTab('daily',this)">◈ Daily</button>
+        <button class="tab" onclick="switchTab('weekly',this)">◈ Weekly</button>
+        <button class="tab" onclick="switchTab('monthly',this)">◈ Monthly</button>
+      </div>
+
+      <div class="tasks" id="tasksEl"></div>
+    </div>
+
+  </div><!-- /page -->
+</div><!-- /app -->
+
+<!-- ════════════════════════════════════════════
+     REGENERATE MODAL
+════════════════════════════════════════════ -->
+<div class="modal-bg" id="regenBg">
+  <div class="modal">
+    <div class="modal-ttl">Regenerate Roadmap</div>
+    <div class="modal-sub">Tell Groq what to do differently — be specific about what isn't working or what you want changed.</div>
+    <textarea id="regenTxt" placeholder="e.g. The daily tasks are too intense. Cut practice to 30 min, add 2 rest days per week, and focus more on fundamentals..."></textarea>
+    <div class="modal-row">
+      <button class="modal-cancel" onclick="closeRegen()">Cancel</button>
+      <button class="modal-go" onclick="submitRegen()">⟳ Regenerate with Groq</button>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════
+     CHAT PANEL
+════════════════════════════════════════════ -->
+<div class="chat" id="chatPanel">
+
+  <div class="chat-top">
+    <div class="chat-brand">
+      <div class="gbadge">G</div>
+      <div>
+        <div class="chat-name">Roadmap Assistant</div>
+        <div class="chat-powered">Groq · groq.com</div>
+      </div>
+    </div>
+    <button class="chat-x" onclick="closeChat()">✕</button>
+  </div>
+
+  <div class="chat-msgs" id="chatMsgs"></div>
+
+  <div class="chat-foot">
+    <div class="chat-row">
+      <textarea
+        class="chat-in" id="chatIn"
+        placeholder="Ask anything about your roadmap, or suggest a change..."
+        rows="1"
+        onkeydown="chatKey(event)"
+        oninput="grow(this)"
+      ></textarea>
+      <button class="send-btn" id="sendBtn" onclick="sendMsg()">
+        <svg width="15" height="15" viewBox="0 0 15 15" fill="none">
+          <path d="M13 7.5L2 2l1.8 5.5L2 13l11-5.5z" fill="white"/>
+        </svg>
+      </button>
+    </div>
+    <div class="chat-hint">Suggest changes → Groq asks before applying them to your roadmap</div>
+  </div>
+
+</div>
+
+<!-- FAB -->
+<button class="fab" id="fab" onclick="openChat()">
+  <div class="fab-ring"></div>
+  💬
+</button>
+
+<!-- ════════════════════════════════════════════
+     SCRIPT
+════════════════════════════════════════════ -->
+<script>
+/* ─── state ─── */
+let apiKey   = '';
+let mode     = 'Mastery';
+let rmData   = { daily:[], weekly:[], monthly:[] };
+let meta     = {};
+let curTab   = 'daily';
+let done     = {};
+let repeat   = {};
+let history  = [];
+let busy     = false;
+
+/* ─── tiny helpers ─── */
+const $  = id => document.getElementById(id);
+const esc = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+function show(id){ $(id).style.display=''; }
+function hide(id){ $(id).style.display='none'; }
+function showF(id){ $(id).style.display='flex'; }
+function grow(el){ el.style.height='auto'; el.style.height=Math.min(el.scrollHeight,110)+'px'; }
+
+/* ─── API KEY GATE ─── */
+function connectKey(){
+  const v = $('gateKey').value.trim();
+  if(!v){ $('gateErr').style.display=''; return; }
+  apiKey = v;
+  $('gateErr').style.display='none';
+  hide('gate');
+  $('app').style.display='block';
+}
+function changeKey(){
+  $('gateKey').value = apiKey;
+  hide('app');
+  show('gate');
+  closeChat();
+  $('fab').classList.remove('show');
+}
+$('gateKey').addEventListener('keydown', e=>{ if(e.key==='Enter') connectKey(); });
+
+/* ─── GROK API CALL ─── */
+async function grok(messages, maxTokens=900){
+  const r = await fetch('https://api.groq.com/openai/v1/chat/completions',{
+    method:'POST',
+    headers:{ 'Content-Type':'application/json', 'Authorization':'Bearer '+apiKey },
+    body: JSON.stringify({ model:'llama-3.3-70b-versatile', messages, max_tokens:maxTokens })
+  });
+  const d = await r.json();
+  if(d.error) throw new Error(d.error.message || 'Groq error');
+  return d.choices?.[0]?.message?.content || '';
+}
+
+/* ─── MODE TOGGLE ─── */
+function setMode(m){
+  mode = m;
+  $('mMastery').classList.toggle('on', m==='Mastery');
+  $('mSuccess').classList.toggle('on', m==='Success');
+}
+
+/* ─── PARSE ROADMAP TEXT ─── */
+function parseRM(text){
+  const s={daily:[],weekly:[],monthly:[]};
+  const dm=text.match(/daily\s+(?:actions?|tasks?)[:\s]*([\s\S]*?)(?=weekly|monthly|$)/i);
+  const wm=text.match(/weekly\s+(?:milestones?|tasks?)[:\s]*([\s\S]*?)(?=monthly|daily|$)/i);
+  const mm=text.match(/monthly\s+(?:goals?|tasks?)[:\s]*([\s\S]*?)(?=weekly|daily|$)/i);
+  const ext=str=>str?str.split('\n').map(l=>l.replace(/^[\s\-\*\d\.\)#]+/,'').trim()).filter(l=>l.length>12).slice(0,9):[];
+  s.daily=ext(dm?.[1]); s.weekly=ext(wm?.[1]); s.monthly=ext(mm?.[1]);
+  if(!s.daily.length&&!s.weekly.length&&!s.monthly.length){
+    const lines=text.split('\n').map(l=>l.replace(/^[\s\-\*\d\.\)#]+/,'').trim()).filter(l=>l.length>12);
+    const t=Math.ceil(lines.length/3);
+    s.daily=lines.slice(0,t); s.weekly=lines.slice(t,t*2); s.monthly=lines.slice(t*2);
+  }
+  return s;
+}
+
+function rmText(){
+  const f=(a,l)=>a.length?`${l}:\n${a.map(t=>`- ${t}`).join('\n')}\n\n`:'';
+  return f(rmData.daily,'Daily Actions')+f(rmData.weekly,'Weekly Milestones')+f(rmData.monthly,'Monthly Goals');
+}
+
+function rmPrompt(m, correction){
+  return `Generate a detailed roadmap for "${m.field}".
+Mode: ${m.mode} | Level: ${m.level}${m.goals?`\nGoals: ${m.goals}`:''}
+${correction?`\nUser feedback to incorporate: ${correction}`:''}
+
+${m.mode==='Mastery'?'Focus on deep, progressive skill-building.':'Focus on achieving a specific outcome via strategy, networking, and skill application.'}
+
+Reply in EXACTLY this format — no extra commentary:
+
+Daily Actions:
+- [specific task with time estimate]
+[6–8 tasks]
+
+Weekly Milestones:
+- [measurable milestone]
+[5–7 milestones]
+
+Monthly Goals:
+- [long-term goal]
+[4–6 goals]
+
+Tailor everything to ${m.level} level. Be specific and actionable.`;
+}
+
+/* ─── GENERATE ROADMAP ─── */
+async function generateRoadmap(correction){
+  const field=$('fieldInput').value.trim();
+  if(!field){ showErr('Please enter a field or topic.'); return; }
+  const level=$('levelSel').value;
+  const goals=$('goalsInput').value.trim();
+  const m={field,mode,level,goals};
+
+  clearErr();
+  hide('formSection');
+  $('loadTxt').textContent = correction ? 'Regenerating with Groq...' : 'Crafting your roadmap with Groq...';
+  showF('loadingSection');
+
+  try{
+    const text = await grok([{role:'user',content:rmPrompt(m,correction)}], 1100);
+    meta = m;
+    rmData = parseRM(text);
+    done={}; repeat={}; curTab='daily'; history=[];
+    renderHeader();
+    $('progFill').style.width='0%'; $('progPct').textContent='0%';
+    document.querySelectorAll('.tab').forEach((t,i)=>t.classList.toggle('on',i===0));
+    hide('loadingSection'); show('roadmapSection');
+    renderTasks('daily');
+    $('fab').classList.add('show');
+  }catch(e){
+    hide('loadingSection'); show('formSection');
+    showErr('Groq error: '+(e.message||'check your API key and try again.'));
+  }
+}
+
+function renderHeader(){
+  $('rmPills').innerHTML=`
+    <span class="pill pill-field">${esc(meta.field)}</span>
+    <span class="pill pill-mode">${meta.mode} Mode</span>
+    <span class="pill pill-level">${meta.level}</span>`;
+  if(meta.goals){ $('rmGoal').textContent='Goal: '+meta.goals; show('rmGoal'); }
+  else{ hide('rmGoal'); }
+}
+
+/* ─── TASKS ─── */
+function renderTasks(tab){
+  const el=$('tasksEl'), tasks=rmData[tab]||[];
+  el.innerHTML='';
+  if(!tasks.length){ el.innerHTML='<div class="empty">◈ No tasks in this section.</div>'; return; }
+  tasks.forEach((txt,i)=>{
+    const key=`${tab}-${i}`, isDone=done[key]||false, isRep=repeat[key]||false;
+    const c=document.createElement('div');
+    c.className='task-card'+(isDone?' done':'');
+    c.style.animationDelay=`${i*55}ms`;
+    c.innerHTML=`
+      <span class="tnum">#${String(i+1).padStart(2,'0')}</span>
+      <div class="tcheck" onclick="toggleDone('${key}','${tab}')">
+        <svg class="chk-svg" width="11" height="9" viewBox="0 0 11 9" fill="none">
+          <path d="M1 4.5l3 3L10 1" stroke="#000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <div class="tbody">
+        <div class="task-text">${esc(txt)}</div>
+        <div class="task-meta">
+          <button class="rep-btn${isRep?' on':''}" onclick="toggleRep('${key}','${tab}')" id="r-${key}">
+            <span class="rep-dot"></span>
+            <span class="rlbl">${isRep?'Repeating daily':'Set repeatable'}</span>
+          </button>
+        </div>
+      </div>`;
+    el.appendChild(c);
+  });
+}
+
+function toggleDone(key,tab){ done[key]=!done[key]; renderTasks(tab); updateProg(); }
+
+function toggleRep(key,tab){
+  repeat[key]=!repeat[key];
+  const b=$(`r-${key}`);
+  if(b){ b.classList.toggle('on',repeat[key]); b.querySelector('.rlbl').textContent=repeat[key]?'Repeating daily':'Set repeatable'; }
+}
+
+function updateProg(){
+  const all=[...rmData.daily.map((_,i)=>`daily-${i}`),...rmData.weekly.map((_,i)=>`weekly-${i}`),...rmData.monthly.map((_,i)=>`monthly-${i}`)];
+  const pct=all.length?Math.round(all.filter(k=>done[k]).length/all.length*100):0;
+  $('progFill').style.width=pct+'%'; $('progPct').textContent=pct+'%';
+}
+
+function switchTab(tab,el){
+  curTab=tab;
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('on'));
+  el.classList.add('on'); renderTasks(tab);
+}
+
+/* ─── RESET ─── */
+function resetAll(){
+  hide('roadmapSection'); show('formSection'); clearErr();
+  closeChat(); $('fab').classList.remove('show'); history=[];
+}
+
+function showErr(m){ const b=$('errBox'); b.textContent=m; b.style.display=''; }
+function clearErr(){ $('errBox').style.display='none'; }
+
+/* ─── REGENERATE MODAL ─── */
+function openRegen(){
+  $('regenTxt').value='';
+  $('regenBg').classList.add('show');
+  setTimeout(()=>$('regenTxt').focus(),300);
+}
+function closeRegen(){ $('regenBg').classList.remove('show'); }
+
+async function submitRegen(){
+  const fb=$('regenTxt').value.trim();
+  if(!fb){ $('regenTxt').style.borderColor='var(--accent2)'; setTimeout(()=>$('regenTxt').style.borderColor='',700); return; }
+  closeRegen();
+  hide('roadmapSection'); closeChat();
+  generateRoadmap(fb);
+}
+
+$('regenBg').addEventListener('click',e=>{ if(e.target===$('regenBg')) closeRegen(); });
+$('regenTxt').addEventListener('keydown',e=>{ if(e.key==='Enter'&&(e.metaKey||e.ctrlKey)) submitRegen(); });
+
+/* ─── CHAT ─── */
+function openChat(){
+  $('chatPanel').classList.add('open');
+  document.body.classList.add('chat-open');
+  $('fab').style.display='none';
+  if(!history.length) initChat();
+}
+function closeChat(){
+  $('chatPanel').classList.remove('open');
+  document.body.classList.remove('chat-open');
+  if($('roadmapSection').style.display!=='none') $('fab').style.display='flex';
+}
+
+function initChat(){
+  history=[]; $('chatMsgs').innerHTML='';
+  aiMsg(`Hey! I'm your personal Roadmap Assistant powered by Groq.\n\nI have full context of your **${meta.field}** roadmap. You can:\n\n• Ask me **why** certain tasks are included\n• Ask **how** to approach specific items\n• Tell me to **add, remove, or change** anything\n\nIf I detect a suggestion, I'll ask before touching your roadmap. Let's go! 🚀`);
+}
+
+function userMsg(text){
+  const d=document.createElement('div');
+  d.className='msg u';
+  d.innerHTML=`<div class="msender">You</div><div class="mbubble">${esc(text).replace(/\n/g,'<br>')}</div>`;
+  $('chatMsgs').appendChild(d); scroll();
+}
+
+function aiMsg(text, sug){
+  const d=document.createElement('div'); d.className='msg a';
+  const fmt=s=>esc(s).replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>').replace(/\n/g,'<br>').replace(/•/g,'•');
+  let html=`<div class="msender">Groq AI</div><div class="mbubble">${fmt(text)}</div>`;
+  if(sug){
+    const sid='s'+Date.now();
+    html+=`<div class="sug-card" id="${sid}">
+      <div class="sug-lbl">✦ Roadmap change detected</div>
+      <div class="sug-txt">${esc(sug)}</div>
+      <div class="sug-row">
+        <button class="sug-yes" onclick="applySug('${sid}',this)">Apply to Roadmap</button>
+        <button class="sug-no" onclick="declineSug('${sid}')">Keep Current</button>
+      </div>
+    </div>`;
+    // store suggestion text on element after render
+    setTimeout(()=>{ const el=$(sid); if(el) el.dataset.sug=sug; },0);
+  }
+  d.innerHTML=html; $('chatMsgs').appendChild(d); scroll();
+}
+
+function thinking(){
+  const d=document.createElement('div'); d.className='msg a'; d.id='think';
+  d.innerHTML=`<div class="msender">Groq AI</div>
+    <div class="mbubble" style="display:flex;gap:5px;align-items:center">
+      <span style="animation:dotP 1s ease infinite 0s;display:inline-block;font-size:16px">·</span>
+      <span style="animation:dotP 1s ease infinite .2s;display:inline-block;font-size:16px">·</span>
+      <span style="animation:dotP 1s ease infinite .4s;display:inline-block;font-size:16px">·</span>
+    </div>`;
+  $('chatMsgs').appendChild(d); scroll();
+}
+function unthink(){ const e=$('think'); if(e) e.remove(); }
+function scroll(){ const m=$('chatMsgs'); m.scrollTop=m.scrollHeight; }
+
+async function applySug(sid, btn){
+  const card=$(sid); if(!card) return;
+  const sugText = card.dataset.sug || card.querySelector('.sug-txt')?.textContent || '';
+  card.querySelector('.sug-row').innerHTML='<div class="sug-status" style="color:var(--muted)">⟳ Applying...</div>';
+
+  thinking();
+  try{
+    const prompt=`The user wants this change applied to their roadmap: "${sugText}"
+
+Current roadmap:
+${rmText()}
+
+Generate a FULL updated roadmap incorporating this change. Keep everything good, adjust what was asked.
+
+Reply in EXACTLY this format:
+Daily Actions:
+- [task]
+[6–8 tasks]
+
+Weekly Milestones:
+- [milestone]
+[5–7 milestones]
+
+Monthly Goals:
+- [goal]
+[4–6 goals]`;
+
+    const newText = await grok([{role:'user',content:prompt}], 1000);
+    rmData = parseRM(newText);
+    renderTasks(curTab); updateProg();
+    unthink();
+    card.querySelector('.sug-row').innerHTML='<div class="sug-status" style="color:var(--success)">✓ Roadmap updated!</div>';
+    aiMsg("Done! Your roadmap has been updated. Check the tabs to see the changes — let me know if you want anything else adjusted.");
+  }catch(e){
+    unthink();
+    card.querySelector('.sug-row').innerHTML='<div class="sug-status" style="color:var(--accent2)">✕ Failed — check API key</div>';
+  }
+}
+
+function declineSug(sid){
+  const c=$(sid); if(c) c.querySelector('.sug-row').innerHTML='<div class="sug-status" style="color:var(--muted)">Kept current roadmap</div>';
+  aiMsg("No problem! Your roadmap stays as-is. Anything else I can help you with?");
+}
+
+/* system prompt for chat */
+function sysPrompt(){
+  return `You are a personal roadmap coach and assistant powered by Groq. You know everything about the user's roadmap.
+
+ROADMAP CONTEXT:
+• Field: ${meta.field}
+• Mode: ${meta.mode}
+• Level: ${meta.level}
+${meta.goals?`• Goals: ${meta.goals}`:''}
+
+CURRENT ROADMAP:
+${rmText()}
+
+INSTRUCTIONS:
+1. Be friendly, specific, and motivating. Keep replies under 130 words unless more detail is genuinely needed.
+2. Reference actual tasks from the roadmap in your answers when relevant.
+3. If the user's message contains a suggestion, complaint, or idea that could IMPROVE the roadmap (add tasks, remove tasks, change structure, adjust difficulty, etc.), always end your reply with this exact marker on its own line:
+   [[SUGGEST: one clear sentence describing the specific change]]
+4. If it's a question, general chat, or doesn't imply a roadmap change, do NOT include [[SUGGEST:]].
+5. Be honest — if something in the roadmap could genuinely be better, say so.`;
+}
+
+async function sendMsg(){
+  if(busy) return;
+  const inp=$('chatIn'); const text=inp.value.trim(); if(!text) return;
+  inp.value=''; inp.style.height='auto';
+  userMsg(text); history.push({role:'user',content:text});
+  busy=true; $('sendBtn').disabled=true; thinking();
+  try{
+    const reply = await grok([{role:'system',content:sysPrompt()},...history], 450);
+    history.push({role:'assistant',content:reply});
+    unthink();
+    const sugMatch=reply.match(/\[\[SUGGEST:\s*([\s\S]*?)\]\]/);
+    let sug=null, clean=reply;
+    if(sugMatch){ sug=sugMatch[1].trim(); clean=reply.replace(/\[\[SUGGEST:[\s\S]*?\]\]/,'').trim(); }
+    aiMsg(clean, sug);
+  }catch(e){
+    unthink();
+    aiMsg("Something went wrong connecting to Groq. Please check your API key (click 'Change Key' in the header) and try again.");
+  }finally{
+    busy=false; $('sendBtn').disabled=false;
+  }
+}
+
+function chatKey(e){ if(e.key==='Enter'&&!e.shiftKey){ e.preventDefault(); sendMsg(); } }
+
+/* form enter keys */
+$('fieldInput').addEventListener('keydown',e=>{ if(e.key==='Enter') generateRoadmap(); });
+$('goalsInput').addEventListener('keydown',e=>{ if(e.key==='Enter') generateRoadmap(); });
+</script>
+</body>
+</html>
