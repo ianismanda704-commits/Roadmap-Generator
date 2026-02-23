@@ -392,7 +392,7 @@ async function generateRoadmap(correction){
     $('progPct').textContent = '0%';
     document.querySelectorAll('.tab').forEach(function(t, i){ t.classList.toggle('on', i === 0); });
     hide('loadingSection');
-    show('roadmapSection');
+    $('roadmapSection').style.display = 'block';
     renderTasks('daily');
     $('fab').classList.add('show');
   } catch(e) {
