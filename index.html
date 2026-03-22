@@ -34,8 +34,8 @@
     .flabel { font-size:10px; letter-spacing:1.5px; text-transform:uppercase; color:var(--muted); display:flex; align-items:center; gap:8px; }
     .flabel .req { color:var(--accent); }
     .flabel .opt { font-size:9px; border:1px solid var(--border); padding:1px 5px; border-radius:2px; }
-    input[type="text"], select { background:var(--surface); border:1px solid var(--border); color:var(--text); font-family:'DM Mono',monospace; font-size:14px; padding:13px 16px; border-radius:4px; width:100%; outline:none; transition:border-color 0.2s, box-shadow 0.2s; }
-    input[type="text"]:focus, select:focus { border-color:var(--accent); box-shadow:0 0 0 2px rgba(232,255,71,0.1); }
+    input[type="text"], input[type="password"], select { background:var(--surface); border:1px solid var(--border); color:var(--text); font-family:'DM Mono',monospace; font-size:14px; padding:13px 16px; border-radius:4px; width:100%; outline:none; transition:border-color 0.2s, box-shadow 0.2s; }
+    input[type="text"]:focus, input[type="password"]:focus, select:focus { border-color:var(--accent); box-shadow:0 0 0 2px rgba(232,255,71,0.1); }
     input::placeholder { color:var(--muted); }
     select { cursor:pointer; appearance:none; background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%236b6b7a' fill='none' stroke-width='1.5'/%3E%3C/svg%3E"); background-repeat:no-repeat; background-position:right 14px center; padding-right:38px; }
     select option { background:var(--surface); }
@@ -164,6 +164,18 @@
     @keyframes dotP { 0%,80%,100%{opacity:.2;transform:scale(.8)} 40%{opacity:1;transform:scale(1)} }
     @media(max-width:640px){ :root{ --chat-w:100vw; } body.chat-open{ padding-right:0; } .fab{ bottom:18px;right:18px; } }
     @media(max-width:480px){ .tab{ font-size:9px;padding:10px 4px;letter-spacing:.5px; } }
+
+    /* API key field styles */
+    .api-key-wrap { position:relative; }
+    .api-key-wrap input { padding-right:44px; }
+    .key-toggle { position:absolute; right:13px; top:50%; transform:translateY(-50%); background:none; border:none; color:var(--muted); cursor:pointer; padding:4px; display:flex; align-items:center; transition:color 0.2s; }
+    .key-toggle:hover { color:var(--text); }
+    .key-hint { font-size:10px; color:var(--muted); margin-top:5px; line-height:1.5; }
+    .key-hint a { color:var(--grok); text-decoration:none; }
+    .key-hint a:hover { text-decoration:underline; }
+    .key-status { display:inline-flex; align-items:center; gap:5px; font-size:9px; letter-spacing:1px; text-transform:uppercase; margin-left:auto; }
+    .key-status.set { color:var(--success); }
+    .key-status.unset { color:var(--muted); }
   </style>
 </head>
 <body>
@@ -187,6 +199,24 @@
   <div class="form-section" id="formSection">
     <div class="sec-label">Configure your path</div>
     <div class="form-grid">
+
+      <!-- API KEY FIELD -->
+      <div class="field">
+        <label class="flabel">
+          Groq API Key <span class="req">*</span>
+          <span class="key-status unset" id="keyStatus">&#9679; Not set</span>
+        </label>
+        <div class="api-key-wrap">
+          <input type="password" id="apiKeyInput" placeholder="gsk_..." oninput="updateKeyStatus()" />
+          <button class="key-toggle" onclick="toggleKeyVis()" title="Show/hide key">
+            <svg id="eyeIcon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
+            </svg>
+          </button>
+        </div>
+        <div class="key-hint">Get your free key at <a href="https://console.groq.com/keys" target="_blank">console.groq.com/keys</a> &mdash; never saved, only held in memory for this session.</div>
+      </div>
+
       <div class="field">
         <label class="flabel">Field / Topic <span class="req">*</span></label>
         <input type="text" id="fieldInput" placeholder="e.g. Data Science, Chess, Video Games, Fitness..." />
@@ -294,11 +324,7 @@
 </button>
 
 <script>
-/* ════════════════════════════════════
-   REPLACE THE VALUE BELOW WITH YOUR
-   ACTUAL GROQ API KEY (starts with gsk_)
-   ════════════════════════════════════ */
-const apiKey = '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' ;
+let apiKey = '';
 
 let mode    = 'Mastery';
 let rmData  = { daily:[], weekly:[], monthly:[] };
@@ -316,14 +342,30 @@ function hide(id){ $(id).style.display='none'; }
 function showF(id){ $(id).style.display='flex'; }
 function grow(el){ el.style.height='auto'; el.style.height=Math.min(el.scrollHeight,110)+'px'; }
 
+function updateKeyStatus(){
+  var val = $('apiKeyInput').value.trim();
+  var s = $('keyStatus');
+  if (val.startsWith('gsk_') && val.length > 10) {
+    s.textContent = '● Set'; s.className = 'key-status set';
+  } else {
+    s.textContent = '● Not set'; s.className = 'key-status unset';
+  }
+}
+
+function toggleKeyVis(){
+  var inp = $('apiKeyInput');
+  inp.type = inp.type === 'password' ? 'text' : 'password';
+}
+
 async function grok(messages, maxTokens){
+  apiKey = $('apiKeyInput').value.trim();
   maxTokens = maxTokens || 900;
-  const r = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+  var r = await fetch('https://api.groq.com/openai/v1/chat/completions', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + apiKey },
     body: JSON.stringify({ model: 'llama-3.3-70b-versatile', messages: messages, max_tokens: maxTokens })
   });
-  const d = await r.json();
+  var d = await r.json();
   if (d.error) throw new Error(d.error.message || 'Groq error');
   return d.choices && d.choices[0] && d.choices[0].message && d.choices[0].message.content || '';
 }
@@ -371,6 +413,9 @@ function rmPrompt(m, correction){
 }
 
 async function generateRoadmap(correction){
+  var key = $('apiKeyInput').value.trim();
+  if (!key) { showErr('Please enter your Groq API key to continue.'); return; }
+  if (!key.startsWith('gsk_')) { showErr('API key should start with gsk_ — check your key at console.groq.com/keys'); return; }
   var field = $('fieldInput').value.trim();
   if (!field) { showErr('Please enter a field or topic.'); return; }
   var level = $('levelSel').value;
@@ -398,7 +443,7 @@ async function generateRoadmap(correction){
   } catch(e) {
     hide('loadingSection');
     show('formSection');
-    showErr('Groq error: ' + (e.message || 'Check that your API key is correctly set in the code.'));
+    showErr('Groq error: ' + (e.message || 'Check your API key and try again.'));
   }
 }
 
@@ -547,7 +592,7 @@ async function applySug(sid, btn){
     aiMsg("Done! Your roadmap has been updated. Check the tabs to see the changes.");
   } catch(e) {
     unthink();
-    card.querySelector('.sug-row').innerHTML = '<div class="sug-status" style="color:var(--accent2)">&#10005; Failed — check API key in code</div>';
+    card.querySelector('.sug-row').innerHTML = '<div class="sug-status" style="color:var(--accent2)">&#10005; Failed — check your API key</div>';
   }
 }
 function declineSug(sid){
@@ -576,7 +621,7 @@ async function sendMsg(){
     aiMsg(clean, sug);
   } catch(e) {
     unthink();
-    aiMsg("Something went wrong connecting to Groq. Check that your API key is correctly set in the code.");
+    aiMsg("Something went wrong connecting to Groq. Check your API key and try again.");
   } finally {
     busy = false; $('sendBtn').disabled = false;
   }
